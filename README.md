@@ -3,7 +3,7 @@
 
 **This project contains three components:**
 1. QuickView - Qt client (Windows, Linux) project;
-2. quickviewer_proxy - The intermediary proxy server writtent in Go
+2. quickviewer_proxy - The intermediary proxy server written in Golang
 3. public-html - The files that need to be served for the web client portal website.
 
 ***Client access portal***
