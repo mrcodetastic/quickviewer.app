@@ -15,7 +15,7 @@
 ![Host Screenshot](screenshot-host.jpg)
 
 
-**Simple interaction work scheme:**
+***Architecture overview***
 
 ```
 Web Client <-> HTTP Server (for web UI content)
