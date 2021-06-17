@@ -6,10 +6,12 @@
 2. quickviewer_proxy - The intermediary proxy server writtent in Go
 3. public-html - The files that need to be served for the web client portal website.
 
-***Client access portal
+***Client access portal***
+
 ![Client Screenshot](screenshot-client.jpg)
 
-*** Host desktop Qt Application
+***Host Desktop Qt Application***
+
 ![Host Screenshot](screenshot-host.jpg)
 
 
@@ -17,5 +19,5 @@
 
 ```
 Web Client <-> HTTP Server (for web UI content)
-Web Client <-> WebSocket Server <-> Go Proxy <-> QuickViewer host desktop Qt application
+Web Client <-> Golang WebSocket Server / Proxy <-> QuickViewer Qt application (host desktop)
 ```
