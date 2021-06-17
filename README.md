@@ -24,4 +24,4 @@ Web Client <-> Golang WebSocket Server / Proxy <-> QuickViewer Qt application (h
 
 ***Credits***
 
-Qt Client based on: https://github.com/agafon0ff/SimpleRemoteDesktop
+Qt host desktop application based on: https://github.com/agafon0ff/SimpleRemoteDesktop
