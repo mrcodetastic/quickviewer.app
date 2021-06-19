@@ -67,6 +67,8 @@ void ScreenCapture::stopSending()
     if(m_grabTimer)
         if(m_grabTimer->isActive())
             m_grabTimer->stop();
+
+    qDebug() << "Stopped sending.";
 }
 
 void ScreenCapture::updateScreen()
@@ -127,7 +129,7 @@ void ScreenCapture::updateImage()
             }
 
             if (missingAck) {
-                qDebug() << "Tile was last acknowleged more than a second ago.";
+                //qDebug() << "Tile was last acknowleged more than a second ago.";
             }
 
 

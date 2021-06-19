@@ -204,7 +204,7 @@ class DataManager
 			}
 			else
 			{
-				var payload = activeBuf.slice(header_end+COMMAND_SIZE*2, header_end+(COMMAND_SIZE*2)+payload_size); // bytes 12+
+				var payload = activeBuf.subarray(header_end+COMMAND_SIZE*2, header_end+(COMMAND_SIZE*2)+payload_size); // bytes 12+
 				// console.log("filling new data buffer with " +  rawdata.length + " bytes");
 				this.newData(command, payload);
 				this.dataTmp = new Uint8Array(); // empty it out 				
