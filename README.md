@@ -1,6 +1,8 @@
 # QuickViewer
 **QuickViewer - Remote desktop management from a web browser, based on Qt5 for the desktop host.**
 
+tl/dr: Use it @ https://quickviewer.app/
+
 **This project contains three components:**
 1. QuickView - Qt client (Windows, Linux) project;
 2. quickviewer_proxy - The intermediary proxy server written in Golang
