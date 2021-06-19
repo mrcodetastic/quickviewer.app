@@ -113,8 +113,8 @@ void QV_MainWindow::loadSettings()
 {
 
 #ifdef QT_DEBUG
-    QString     proxyHost                   = "ws://192.168.8.100:8080";
-  //  QString     proxyHost                   = "ws://quickviewer.app:8080";
+    //QString     proxyHost                   = "ws://192.168.8.100:8080";
+    QString     proxyHost                   = "ws://quickviewer.app:8080";
 #else
     QString     proxyHost                   = "ws://quickviewer.app:8080";
 #endif

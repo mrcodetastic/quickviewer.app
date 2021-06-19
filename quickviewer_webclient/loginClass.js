@@ -131,17 +131,18 @@ class LoginClass
 		
 		var id = urlParams.get('id');
 		console.log("Requested ID is: " + id);
-		if (!isNaN(id)) { // it's a number
+		if (!isNaN(id) && id != null) { // it's a number
 			
 			this.inputLogin.value = id;			
 		}
-		
+		/*
 		var id = urlParams.get('go');
 		console.log("Requested ID is: " + id);
 		if (!isNaN(id)) { // it's a number
 			
 			this.inputLogin.value = id;			
-		}		
+		}
+*/		
         
         this.inputPass = document.createElement('input');
         this.inputPass.id = 'inputPass';

@@ -7,18 +7,16 @@
 #include <QDesktopWidget>
 #include <QDebug>
 #include <QBuffer>
+#include <QTime>
 
 ScreenCapture::ScreenCapture(QObject *parent) : QObject(parent),
     m_grabTimer(Q_NULLPTR),
     m_grabInterval(300),
-    m_rectSize(200),
-    m_screenNumber(0),
-    m_currentTileNum(0),
-    m_receivedTileNum(0),
-    m_permitCounter(0)
+    m_rectSize(300),
+    m_screenNumber(0)
 {
-    m_meanCounter.resize(4);
-    m_meanCounter.fill(1);
+    m_AckLatencyMs.resize(10);
+    m_AckLatencyMs.fill(5000);
 }
 
 void ScreenCapture::start()
@@ -58,10 +56,6 @@ void ScreenCapture::startSending()
         if(!m_grabTimer->isActive())
             m_grabTimer->start(m_grabInterval);
 
-    m_permitCounter = 0;
-    m_receivedTileNum = 0;
-    m_currentTileNum = 0;
-
     m_lastImage = QImage();
     updateImage();
 }
@@ -84,16 +78,6 @@ void ScreenCapture::updateScreen()
 
 void ScreenCapture::updateImage()
 {
-    /*
-
-    if(!isSendTilePermit())
-    {
-        // qDebug()<<"GraberClass::updateImage - send not permitted.";
-        return;
-
-    }
-    */
-
 
     QScreen *screen = QApplication::screens().at(m_screenNumber);
     //QImage currentImage = screen->grabWindow(0).toImage().convertToFormat(QImage::Format_RGB444);
@@ -117,84 +101,116 @@ void ScreenCapture::updateImage()
         emit imageParameters(currentImage.size(), m_rectSize);
     }
 
+
     quint16 tileNum = 0;
-
-    /*
-    if (currentImage != m_lastImage)
-    {
-         // qDebug()<<"A lot has changed, so sending a full image.";
-         sendImage(currentImage);
-         m_lastImage = currentImage;
-         setReceivedTileNum(0);
-         return;
-
-         // Can't send these as payload too large
-    }
-    */
-
 
     /* Pre-check to see if > 50% of the tiles have changed, if so, just send a complete new image instead. */
     quint16 numTiles        = columnCount*rowCount;
     quint16 numDirtyTiles   = 0;
 
+    m_time        = QTime::currentTime();
+    quint64 dtime = m_time.msecsSinceStartOfDay();
+
+
     for(int i=0;i<columnCount;++i) {
         for(int j=0;j<rowCount;++j) {
 
-            QImage image = currentImage.copy(i*m_rectSize, j*m_rectSize, m_rectSize, m_rectSize);
-            QImage lastImage = m_lastImage.copy(i*m_rectSize, j*m_rectSize, m_rectSize, m_rectSize);
+            tileNum = (i*rowCount)+j;
+            QImage image        = currentImage.copy(i*m_rectSize, j*m_rectSize, m_rectSize, m_rectSize);
+            QImage lastImage     = m_lastImage.copy(i*m_rectSize, j*m_rectSize, m_rectSize, m_rectSize);
 
-            if(lastImage != image)
+            // when was the last ackowlegement of a tile, more than a second ago?
+            bool missingAck = false;
+
+            if ( m_tilePendingAck.contains(tileNum) ) {
+                missingAck = ( (dtime - m_tilePendingAck.value(tileNum) ) > 1000) ? true:false;
+            }
+
+            if (missingAck) {
+                qDebug() << "Tile was last acknowleged more than a second ago.";
+            }
+
+
+            if(lastImage != image) {
                 numDirtyTiles++;
-        }
-    }
+                sendImage(i,j,tileNum,image);
+                m_tilePendingAck.insert(tileNum, dtime );
+#ifdef Q_DEBUG
+                qDebug() << "Send tile " << tileNum << " at ms" << dtime;
+#endif
 
-    // More than half is dirty, easier to just send a full screen image
-
-    if (numDirtyTiles > numTiles/2)
-    {
-         // qDebug()<<"A lot has changed, so sending a full image.";
-         sendImage(currentImage);
-         m_lastImage = currentImage;
-       //  setReceivedTileNum(0);
-         return;
-
-         // Can't send these as payload too large
-    }
-
-
-    /* Else, send only the tiles that have changed. */
-    for(int i=0;i<columnCount;++i)
-    {
-        for(int j=0;j<rowCount;++j)
-        {
-            QImage image = currentImage.copy(i*m_rectSize, j*m_rectSize, m_rectSize, m_rectSize);
-            QImage lastImage = m_lastImage.copy(i*m_rectSize, j*m_rectSize, m_rectSize, m_rectSize);
-
-            if(lastImage != image)
+            }
+            else if ( missingAck)
             {
                 sendImage(i,j,tileNum,image);
-                m_currentTileNum = tileNum;
-                ++tileNum;
+                m_tilePendingAck.remove(tileNum); // need to do this here or we'll cause a race condition
+            }
+
+            if (numDirtyTiles > numTiles/3)
+            {
+                sendImage(currentImage);
+                break;
             }
         }
     }
+
     m_lastImage = currentImage;
+
+
+    /*
+    if ( m_lastImage != currentImage) {
+            m_lastImage = currentImage;
+            sendImage(currentImage);
+            return;
+    }
+    */
+
 }
 
-void ScreenCapture::setReceivedTileNum(quint16 num)
+void ScreenCapture::setReceivedTileNum(quint16 tileNum)
 {
-    m_permitCounter = 0;
-    m_receivedTileNum = num;
+#ifdef QT_DEBUG
+    qDebug() << "Client recieved tile " << tileNum;
+#endif
+
+    if (tileNum == 9999) // within displayField.js line ~500
+    {
+        m_tilePendingAck.clear();
+    }
+
+    m_time        =     QTime::currentTime();
+    quint64 dtime = m_time.msecsSinceStartOfDay();
+
+    if (m_tilePendingAck.contains(tileNum)) {
+         quint64 sentMs     = m_tilePendingAck.value(tileNum);
+         quint64 latencyMs  = dtime - sentMs;
+
+         m_AckLatencyMs.pop_back();
+         m_AckLatencyMs.push_front(latencyMs);
+
+//         qDebug() << "Adding latency of:" << latencyMs;
+
+         // Update mean latency, NOT USED ANYMORE
+         m_meanAckLatencyMs = std::accumulate(m_AckLatencyMs.begin(), m_AckLatencyMs.end(), .0) / m_AckLatencyMs.size();
+
+#ifdef QT_DEBUG
+         qDebug()<<"GraberClass::setReceivedTileNum - Current client tile acknowledge latency (ms) is: " << m_meanAckLatencyMs;
+#endif
+         // Remove from pending list
+         m_tilePendingAck.remove(tileNum);
+
+    }
+
 }
 
 /* Send a tile image */
-void ScreenCapture::sendImage(int posX, int posY, int tileNum, const QImage &image)
-{
+void ScreenCapture::sendImage(int posX, int posY, quint16 tileNum, const QImage &image)
+{    
     QByteArray bArray;
     QBuffer buffer(&bArray);
     buffer.open(QIODevice::WriteOnly);
     //image.save(&buffer, "PNG");
-    image.save(&buffer, "WEBP", 15);
+    image.save(&buffer, "WEBP", 25);
     //bArray.remove(0,PNG_HEADER_SIZE);
 
     emit imageTile(static_cast<quint16>(posX),static_cast<quint16>(posY),bArray,static_cast<quint16>(tileNum));
@@ -206,30 +222,10 @@ void ScreenCapture::sendImage(const QImage &image)
     QByteArray bArray;
     QBuffer buffer(&bArray);
     buffer.open(QIODevice::WriteOnly);
-    image.save(&buffer, "WEBP", 25);
+    image.save(&buffer, "WEBP", 35);
+
+    m_tilePendingAck.clear();
 
     emit imageScreen(bArray); // full screen one
 }
 
-
-
-bool ScreenCapture::isSendTilePermit()
-{
-    bool result = false;
-
-    if(m_currentTileNum <= (m_receivedTileNum))
-        result = true;
-
-    if(!result)
-    {
-        ++m_permitCounter;
-
-        if(m_permitCounter > 20)
-        {
-            m_permitCounter = 0;
-            result = true;
-        }
-    }
-
-    return result;
-}

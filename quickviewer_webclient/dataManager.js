@@ -313,13 +313,15 @@ class DataManager
             var posY = this.uint32FromArray(payload.slice(4,8));
             var tileNum = this.uint32FromArray(payload.slice(8,12));
             var b64encoded = 'data:image/webp;base64,' + btoa(String.fromCharCode.apply(null, payload.slice(12)));
+			
+			console.log("Recieved tile: " + tileNum);
             
             if(this.displayField)
                 this.displayField.setImageData(posX, posY, b64encoded, tileNum);
         }
         else if(command === KEY_IMAGE_SCREEN)
         {
-             console.log("got a full screen image.");
+             //console.log("got a full screen image.");
              var b64encoded = 'data:image/webp;base64,' + btoa(String.fromCharCode.apply(null, payload));
 
             if(this.displayField)

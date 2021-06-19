@@ -300,7 +300,7 @@ void WebSocketHandler::proxyHandlerDisconnected(const QByteArray &uuid)
 
 void WebSocketHandler::newData(const QByteArray &command, const QByteArray &data)
 {
-    #ifdef QT_DEBUG
+    #ifdef QT_DEBUG_1
         qDebug()<<"DataParser::newData"<<command<<data;
     #endif
 
@@ -425,7 +425,7 @@ void WebSocketHandler::newData(const QByteArray &command, const QByteArray &data
     }
     else if(command == KEY_SET_NAME)
     {
-        m_name = QString::fromUtf8(data);
+     //   m_name = QString::fromUtf8(data);
         // qDebug()<<"New desktop connected:"<<m_name;
     }
 
@@ -551,7 +551,7 @@ void WebSocketHandler::textMessageReceived(const QString &message)
 // QT client does not recieve data with a packet start header, javascript Web Client Does
 void WebSocketHandler::binaryMessageReceived(const QByteArray &data)
 {
-#ifdef QT_DEBUG
+#ifdef QT_DEBUG_1
     qDebug() << "WebSocketHandler::binaryMessageReceived!";
     debugHexData(data);
 #endif
@@ -633,7 +633,7 @@ void WebSocketHandler::binaryMessageReceived(const QByteArray &data)
             }
             else
             {
-                debugHexData(activeBuf);
+              //  debugHexData(activeBuf);
 
                 m_ws_stream = activeBuf.mid(dataStep, size - dataStep);
 

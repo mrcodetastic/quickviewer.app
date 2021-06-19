@@ -4,7 +4,8 @@
 #include <QObject>
 #include <QTimer>
 #include <QImage>
-#include <QList>
+#include <QMap>
+#include <QTime>
 
 class ScreenCapture : public QObject
 {
@@ -30,11 +31,13 @@ private:
     int m_grabInterval;
     int m_rectSize;
     int m_screenNumber;
-    int m_currentTileNum;
-    int m_receivedTileNum;
-    int m_permitCounter;
     QImage m_lastImage;
-    QVector<int> m_meanCounter;
+    QTime m_time;
+
+    // tile response ack time
+    QMap <quint16, quint64>  m_tilePendingAck;  // tile, and time sent
+    QVector<quint64>         m_AckLatencyMs;
+    quint64                  m_meanAckLatencyMs;
 
 signals: // 'emit'
     void finished();
@@ -57,9 +60,8 @@ public slots:
     void setReceivedTileNum(quint16 num);
 
 private slots:
-    void sendImage(int posX, int posY, int tileNum, const QImage& image);
+    void sendImage(int posX, int posY, quint16 tileNum, const QImage& image);
     void sendImage(const QImage& image); // full screen image
-    bool isSendTilePermit();
 };
 
 #endif // SCREEN_CAPTURE_H

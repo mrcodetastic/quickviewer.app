@@ -499,7 +499,7 @@ class DisplayField
         image.onload = function()
         {
             this.ctx.drawImage(this, 0,0);
-            this.dataManager.sendInput(KEY_TILE_RECEIVED,1000,0); // HACK, awlays trigger refresh
+            this.dataManager.sendInput(KEY_TILE_RECEIVED,9999,0); // HACK, awlays trigger refresh
         }
 
         image.src = b64data;
