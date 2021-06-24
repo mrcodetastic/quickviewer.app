@@ -3,6 +3,8 @@
 
 tl/dr: Use it @ https://quickviewer.app/
 
+It kind of sucks, but it was built out of pure boredom.
+
 **This project contains three components:**
 1. QuickView - Qt client (Windows, Linux) project;
 2. quickviewer_proxy - The intermediary proxy server written in Golang
